@@ -42,7 +42,7 @@ IDT (Interrupt Descriptor Table, таблица дескрипторов пре�
 - Offset[15:0]
 - Selector
 - [[IST]] (3 бита) и Zero
-- Type/Attributes
+- [[Type and Attributes |Type/Attributes]]
 - Offset[31:16]
 - Offset[63:32]
 - Zero
@@ -53,7 +53,7 @@ IDTR хранит указатель на таблицу:
 - Base (адрес IDT)
 
 ## Векторы прерываний
-- **0–31** — исключения процессора (деление на ноль, invalid opcode, page fault и т.д.).
+- **0–31** — [[CPU exceptions|исключения процессора]] (деление на ноль, invalid opcode, page fault и т.д.).
 - **32–255** — обычно аппаратные прерывания и программные прерывания ОС.
 
 ОС обычно переназначает (remap) аппаратные IRQ, чтобы они не конфликтовали с исключениями.
