@@ -29,6 +29,29 @@ IDT (Interrupt Descriptor Table, таблица дескрипторов пре�
 - **Selector** — сегмент кода, в котором находится обработчик.
 - **Type/Attributes** — тип шлюза, уровень привилегий (DPL), признак присутствия (P).
 
+## Структура записи IDT (x86, 32-bit)
+Запись IDT занимает 8 байт:
+- Offset[15:0]
+- Selector
+- Zero
+- Type/Attributes
+- Offset[31:16]
+
+## Структура записи IDT (x86_64, 64-bit)
+Запись IDT занимает 16 байт:
+- Offset[15:0]
+- Selector
+- IST (3 бита) и Zero
+- Type/Attributes
+- Offset[31:16]
+- Offset[63:32]
+- Zero
+
+## Структура IDTR
+IDTR хранит указатель на таблицу:
+- Limit (размер IDT в байтах - 1)
+- Base (адрес IDT)
+
 ## Векторы прерываний
 - **0–31** — исключения процессора (деление на ноль, invalid opcode, page fault и т.д.).
 - **32–255** — обычно аппаратные прерывания и программные прерывания ОС.
@@ -46,6 +69,47 @@ IDT (Interrupt Descriptor Table, таблица дескрипторов пре�
 В x86_64 размер записи увеличен (адрес обработчика 64‑битный), но логика остаётся:
 - Offset разбит на 3 части.
 - Selector и атрибуты аналогичны.
+
+## Пример кода (x86_64, C)
+Ниже минимальный пример объявления структуры и загрузки IDT.
+
+```c
+// Минимальные структуры для x86_64.
+struct idt_entry64 {
+    unsigned short offset_low;
+    unsigned short selector;
+    unsigned char ist;
+    unsigned char type_attr;
+    unsigned short offset_mid;
+    unsigned int offset_high;
+    unsigned int zero;
+} __attribute__((packed));
+
+struct idtr {
+    unsigned short limit;
+    unsigned long long base;
+} __attribute__((packed));
+
+static struct idt_entry64 idt[256];
+
+static void set_idt_gate(int vec, void (*handler)(void), unsigned char type_attr) {
+    unsigned long long addr = (unsigned long long)handler;
+    idt[vec].offset_low = (unsigned short)(addr & 0xFFFF);
+    idt[vec].selector = 0x08; // кодовый сегмент ядра
+    idt[vec].ist = 0;
+    idt[vec].type_attr = type_attr; // например 0x8E: interrupt gate, DPL=0, P=1
+    idt[vec].offset_mid = (unsigned short)((addr >> 16) & 0xFFFF);
+    idt[vec].offset_high = (unsigned int)((addr >> 32) & 0xFFFFFFFF);
+    idt[vec].zero = 0;
+}
+
+static void load_idt(void) {
+    struct idtr idtr_desc;
+    idtr_desc.limit = (unsigned short)(sizeof(idt) - 1);
+    idtr_desc.base = (unsigned long long)&idt[0];
+    __asm__ volatile("lidt %0" : : "m"(idtr_desc));
+}
+```
 
 ## Взаимодействие с обработчиками
 При срабатывании прерывания процессор:
