@@ -41,7 +41,7 @@ IDT (Interrupt Descriptor Table, таблица дескрипторов пре�
 Запись IDT занимает 16 байт:
 - Offset[15:0]
 - Selector
-- IST (3 бита) и Zero
+- [[IST]] (3 бита) и Zero
 - Type/Attributes
 - Offset[31:16]
 - Offset[63:32]
